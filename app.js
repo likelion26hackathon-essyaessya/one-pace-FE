@@ -196,13 +196,13 @@ function seedConversations() {
     { sender: "Emma", text: "Hi everyone! Let's kick off the weekly sync. Main goal today is locking down the landing page launch.", timestamp: at(10, 0) },
     { sender: "James", text: "From the dev side, the API integration is done. We just need final copy and design assets.", timestamp: at(10, 2) },
     { sender: "Sarah", text: "Design is about 90% done. I can have the final mockups ready by tomorrow.", timestamp: at(10, 5) },
-    { sender: "Emma", text: "Great, let's decide: we'll launch the landing page next Monday.", timestamp: at(10, 8) },
-    { sender: "James", text: "Agreed. I'll deploy the API changes to staging by Friday so we have time to test.", timestamp: at(10, 10) },
-    { sender: "Sarah", text: "Sounds good. I'll send the final design files to James by tomorrow EOD.", timestamp: at(10, 12) },
-    { sender: "Emma", text: "Perfect. I'll write the launch announcement and share it for review by Thursday.", timestamp: at(10, 15) },
+    { sender: "Emma", text: "Great, let's decide: we'll launch the landing page next Monday at 10:00 AM KST.", timestamp: at(10, 8) },
+    { sender: "James", text: "Agreed. I'll deploy the API changes to staging by this Friday at 6:00 PM KST so we have time to test.", timestamp: at(10, 10) },
+    { sender: "Sarah", text: "Sounds good. I'll send the final design files to James by tomorrow 6:00 PM KST.", timestamp: at(10, 12) },
+    { sender: "Emma", text: "Perfect. I'll write the launch announcement and share it for review by Thursday 3:00 PM KST.", timestamp: at(10, 15) },
     { sender: "James", text: "One more thing — we should also fix the mobile nav bug before launch, it's been reported twice.", timestamp: at(10, 18) },
     { sender: "Emma", text: "Good catch. James, can you own that fix as well?", timestamp: at(10, 19) },
-    { sender: "James", text: "Sure, I'll take care of it along with the staging deploy on Friday.", timestamp: at(10, 20) },
+    { sender: "James", text: "Sure, I'll take care of it along with the staging deploy by Friday 6:00 PM KST.", timestamp: at(10, 20) },
   ];
 
   state.conversations.Emma = [
