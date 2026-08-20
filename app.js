@@ -423,7 +423,7 @@ function getCurrentCounterpartCountry() {
 // 지구본 + 말풍선: 상대 팀원의 국적 및 현지 시간을 항상 표시 (백엔드 호출 없는 순수 프론트 로직)
 function updateCounterpartStatus() {
   const country = getCurrentCounterpartCountry();
-  if (!country || !COUNTRY_NATIONALITY[country]) {
+  if (!state.onePaceEnabled || !country || !COUNTRY_NATIONALITY[country]) {
     counterpartStatus.classList.add("hidden");
     return;
   }
@@ -735,15 +735,17 @@ onePaceToggle.addEventListener("click", () => {
   updateOnePacePopoverState();
 
   if (!state.onePaceEnabled) {
-    // 끄면 진행 중이던 실시간 분석을 즉시 정리한다.
+    // 끄면 진행 중이던 실시간 분석과 관련 UI를 즉시 정리한다.
     clearTimeout(debounceTimer);
     if (abortController) abortController.abort();
     clearRiskyWords();
     cultureAnalyzing.classList.add("hidden");
+    rightPanel.classList.add("hidden");
     showToast("ONE PACE를 비활성화했어요");
   } else {
     showToast("ONE PACE를 활성화했어요");
   }
+  updateCounterpartStatus(); // 지구본/말풍선도 활성 상태를 따라간다
 });
 
 updateOnePacePopoverState();

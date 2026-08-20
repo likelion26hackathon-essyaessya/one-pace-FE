@@ -1448,7 +1448,7 @@ button {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 14px;
+  margin: -20px 0 18px;
   padding: 5px 12px;
   border-radius: 999px;
   background: #fff;
