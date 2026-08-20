@@ -87,9 +87,56 @@
           </div>
         </div>
         <div class="top-actions">
-          <button class="top-btn onepace-trigger" id="onepaceTrigger" aria-label="ONE PACE AI 요약">
-            <img src="logo-icon.png" alt="ONE PACE" />
-          </button>
+          <div class="onepace-trigger-wrap">
+            <button class="top-btn onepace-trigger" id="onepaceTrigger" aria-label="ONE PACE">
+              <img src="logo-icon.png" alt="ONE PACE" />
+            </button>
+
+            <div class="onepace-popover hidden" id="onePacePopover">
+              <div class="onepace-popover-header">
+                <div class="onepace-popover-title">
+                  <img src="logo-icon.png" alt="" />
+                  <strong>ONE PACE</strong>
+                </div>
+                <div class="onepace-popover-header-actions">
+                  <button class="panel-header-icon-btn" id="onePaceSettingsBtn" aria-label="설정">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <circle cx="12" cy="12" r="3"></circle>
+                      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82A1.65 1.65 0 0 0 3 13.09H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                  </button>
+                  <button id="onePacePopoverClose" aria-label="닫기">×</button>
+                </div>
+              </div>
+
+              <div class="onepace-popover-body">
+                <div id="onePaceActiveState">
+                  <div class="onepace-status-row">
+                    <span class="pulse-dot"></span>
+                    <strong>분석 중...</strong>
+                  </div>
+                  <p class="onepace-status-desc">AI가 실시간으로 오해를 탐지하고 있습니다.</p>
+                  <button class="summary-action-btn" id="openSummaryFromPopover">AI 회의록 요약 열기</button>
+                  <button class="summary-action-btn" id="openDashboardBtn">전체 분석 리포트 대시보드</button>
+                </div>
+
+                <div id="onePaceInactiveState" class="hidden">
+                  <p class="onepace-inactive-text">ONE PACE가 비활성화 상태입니다.</p>
+                  <button class="onepace-help-link" id="onePaceHelpBtn">도움말</button>
+                </div>
+              </div>
+
+              <div class="onepace-popover-footer">
+                <span class="onepace-version">v1.0.0</span>
+                <div class="onepace-toggle-row">
+                  <span id="onePaceToggleLabel">ONE PACE 활성화됨</span>
+                  <button class="onepace-toggle" id="onePaceToggle" role="switch" aria-checked="true" aria-label="ONE PACE 활성화 여부">
+                    <span class="onepace-toggle-knob"></span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
           <button class="top-btn inert" aria-label="검색">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <circle cx="11" cy="11" r="7"></circle>

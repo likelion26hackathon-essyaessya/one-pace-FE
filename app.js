@@ -6,6 +6,7 @@ const state = {
   conversations: { meeting: [], Emma: [], James: [], Sarah: [] }, // key별 message[]: { sender, text, timestamp }
   currentConversation: "Emma",
   currentCounterpartCountry: "US",
+  onePaceEnabled: true, // 꺼지면 문화번역기 실시간 분석을 하지 않는다
 };
 
 // ============================================================
@@ -34,6 +35,16 @@ const counterpartStatus = document.getElementById("counterpartStatus");
 const counterpartBubbleText = document.getElementById("counterpartBubbleText");
 
 const onepaceTrigger = document.getElementById("onepaceTrigger");
+const onePacePopover = document.getElementById("onePacePopover");
+const onePacePopoverClose = document.getElementById("onePacePopoverClose");
+const onePaceSettingsBtn = document.getElementById("onePaceSettingsBtn");
+const onePaceActiveState = document.getElementById("onePaceActiveState");
+const onePaceInactiveState = document.getElementById("onePaceInactiveState");
+const openSummaryFromPopover = document.getElementById("openSummaryFromPopover");
+const openDashboardBtn = document.getElementById("openDashboardBtn");
+const onePaceHelpBtn = document.getElementById("onePaceHelpBtn");
+const onePaceToggle = document.getElementById("onePaceToggle");
+const onePaceToggleLabel = document.getElementById("onePaceToggleLabel");
 const rightPanel = document.getElementById("rightPanel");
 const closePanel = document.getElementById("closePanel");
 const summaryIntro = document.getElementById("summaryIntro");
@@ -540,9 +551,11 @@ function markRiskyWords(data) {
 }
 
 messageInput.addEventListener("input", () => {
+  if (messageInput.textContent.trim() === "") messageInput.innerHTML = "";
+  if (!state.onePaceEnabled) return; // 꺼져 있으면 실시간 분석을 하지 않는다
+
   clearTimeout(debounceTimer);
   clearRiskyWords(); // 텍스트가 바뀌면 이전 분석 결과에 딸린 밑줄은 더 이상 유효하지 않다.
-  if (messageInput.textContent.trim() === "") messageInput.innerHTML = "";
 
   const text = getComposerText();
   if (text.length < 5) {
@@ -675,9 +688,65 @@ cultureAccept.addEventListener("click", () => {
 
 let lastSummaryData = null;
 
+// ============================================================
+// ONE PACE 팝오버 (활성/비활성)
+// ============================================================
+
+function updateOnePacePopoverState() {
+  onePaceActiveState.classList.toggle("hidden", !state.onePaceEnabled);
+  onePaceInactiveState.classList.toggle("hidden", state.onePaceEnabled);
+  onePaceToggle.setAttribute("aria-checked", String(state.onePaceEnabled));
+  onePaceToggleLabel.textContent = state.onePaceEnabled ? "ONE PACE 활성화됨" : "ONE PACE 비활성화됨";
+}
+
 onepaceTrigger.addEventListener("click", () => {
+  onePacePopover.classList.toggle("hidden");
+});
+
+onePacePopoverClose.addEventListener("click", () => {
+  onePacePopover.classList.add("hidden");
+});
+
+document.addEventListener("click", (e) => {
+  if (onePacePopover.classList.contains("hidden")) return;
+  if (e.target.closest(".onepace-trigger-wrap")) return;
+  onePacePopover.classList.add("hidden");
+});
+
+onePaceSettingsBtn.addEventListener("click", () => {
+  showToast("데모 버전에서는 지원하지 않는 기능이에요");
+});
+
+onePaceHelpBtn.addEventListener("click", () => {
+  showToast("데모 버전에서는 지원하지 않는 기능이에요");
+});
+
+openDashboardBtn.addEventListener("click", () => {
+  showToast("데모 버전에서는 지원하지 않는 기능이에요");
+});
+
+openSummaryFromPopover.addEventListener("click", () => {
+  onePacePopover.classList.add("hidden");
   rightPanel.classList.remove("hidden");
 });
+
+onePaceToggle.addEventListener("click", () => {
+  state.onePaceEnabled = !state.onePaceEnabled;
+  updateOnePacePopoverState();
+
+  if (!state.onePaceEnabled) {
+    // 끄면 진행 중이던 실시간 분석을 즉시 정리한다.
+    clearTimeout(debounceTimer);
+    if (abortController) abortController.abort();
+    clearRiskyWords();
+    cultureAnalyzing.classList.add("hidden");
+    showToast("ONE PACE를 비활성화했어요");
+  } else {
+    showToast("ONE PACE를 활성화했어요");
+  }
+});
+
+updateOnePacePopoverState();
 
 closePanel.addEventListener("click", () => {
   rightPanel.classList.add("hidden");
