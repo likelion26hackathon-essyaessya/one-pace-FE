@@ -595,12 +595,24 @@ function hideCulturePopup() {
 culturePopupClose.addEventListener("click", hideCulturePopup);
 cultureDismiss.addEventListener("click", hideCulturePopup);
 
+const ACCEPT_FLASH_MS = 1600; // 수락한 문장에 민트색 형광펜이 잠깐 칠해졌다 사라지는 시간
+
 cultureAccept.addEventListener("click", () => {
   if (!lastCultureData || !activeRiskySpan) return;
-  activeRiskySpan.replaceWith(document.createTextNode(lastCultureData.suggestedText));
-  messageInput.normalize();
+
+  const flashSpan = document.createElement("span");
+  flashSpan.className = "accepted-flash";
+  flashSpan.textContent = lastCultureData.suggestedText;
+  activeRiskySpan.replaceWith(flashSpan);
   activeRiskySpan = null;
   hideCulturePopup();
+
+  setTimeout(() => {
+    if (flashSpan.isConnected) {
+      flashSpan.replaceWith(document.createTextNode(flashSpan.textContent));
+      messageInput.normalize();
+    }
+  }, ACCEPT_FLASH_MS);
 });
 
 // ============================================================

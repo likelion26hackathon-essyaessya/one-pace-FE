@@ -570,6 +570,23 @@ button {
   background: #e2e2e2;
 }
 
+.accepted-flash {
+  border-radius: 3px;
+  animation: accepted-flash 1.6s ease forwards;
+}
+
+@keyframes accepted-flash {
+  0% {
+    background-color: var(--suggestion-bg);
+  }
+  65% {
+    background-color: var(--suggestion-bg);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
 .composer-bottom {
   height: 42px;
   display: flex;
