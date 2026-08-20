@@ -618,7 +618,11 @@ button {
   border-radius: 5px;
   background: #007a5a;
   color: #fff;
-  font-size: 14px;
+}
+
+.send-btn svg {
+  width: 15px;
+  height: 15px;
 }
 
 .send-btn:hover {
