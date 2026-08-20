@@ -234,7 +234,7 @@ function switchConversation(key, { silent = false } = {}) {
 
   // 대화방을 옮기면 작성 중이던 메시지와 그에 딸린 분석 상태를 모두 초기화한다.
   messageInput.innerHTML = "";
-  clearRiskyWord();
+  clearRiskyWords();
   cultureAnalyzing.classList.add("hidden");
   lastAnalyzedText = "";
   if (abortController) abortController.abort();
@@ -325,7 +325,7 @@ function sendMessage() {
   renderMessage(message);
 
   messageInput.innerHTML = "";
-  clearRiskyWord();
+  clearRiskyWords();
   cultureAnalyzing.classList.add("hidden");
   lastAnalyzedText = "";
   if (abortController) abortController.abort();
@@ -435,7 +435,7 @@ let debounceTimer = null;
 let abortController = null;
 let lastAnalyzedText = "";
 let lastCultureData = null;
-let activeRiskySpan = null; // 밑줄 쳐진 위험 단어 <span>. 클릭해야 팝업이 뜬다.
+let activeRiskySpans = []; // 밑줄 쳐진 위험 단어 <span> 목록 (한 분석 결과에 여러 개일 수 있다). 클릭해야 팝업이 뜬다.
 
 const CULTURE_DEBOUNCE_MS = 300; // 실시간에 가깝게 느껴지도록 최소한으로만 대기
 
@@ -484,47 +484,64 @@ function setCaretOffset(offset) {
   selection.addRange(range);
 }
 
-// 위험 단어 밑줄을 벗겨내고 원래 순수 텍스트로 되돌린다 (새 분석 전, 전송 전, 대화방 전환 시 호출).
-function clearRiskyWord() {
+// 위험 단어 밑줄들을 모두 벗겨내고 원래 순수 텍스트로 되돌린다 (새 분석 전, 전송 전, 대화방 전환 시 호출).
+function clearRiskyWords() {
   hideCulturePopup();
-  if (activeRiskySpan && activeRiskySpan.isConnected) {
+  if (activeRiskySpans.length) {
     const caretOffset = getCaretOffset();
-    activeRiskySpan.replaceWith(document.createTextNode(activeRiskySpan.textContent));
+    activeRiskySpans.forEach((span) => {
+      if (span.isConnected) span.replaceWith(document.createTextNode(span.textContent));
+    });
     messageInput.normalize();
     setCaretOffset(caretOffset);
   }
-  activeRiskySpan = null;
+  activeRiskySpans = [];
 }
 
-// 분석 결과로 감지된 표현을 입력창 안에서 찾아 밑줄 <span>으로 감싼다. 이 시점엔 팝업을 띄우지 않는다.
-function markRiskyWord(data) {
-  clearRiskyWord();
+// realtimeDetection 배열의 각 표현을 입력창 안에서 찾아 각각 밑줄 <span>으로 감싼다.
+// 표현마다 원문에 등장하는 그대로(대소문자·띄어쓰기·구두점까지)의 부분 문자열이 보장되므로 순서대로 indexOf만으로 찾는다.
+// 이 시점엔 팝업을 띄우지 않는다.
+function markRiskyWords(data) {
+  clearRiskyWords();
+
+  const expressions = (data.realtimeDetection || []).filter(Boolean);
+  if (!expressions.length) return;
 
   const text = messageInput.textContent;
-  const idx = text.indexOf(data.detectedExpression);
-  if (idx === -1) return;
+  const matches = [];
+  let searchFrom = 0;
+  expressions.forEach((expr) => {
+    const idx = text.indexOf(expr, searchFrom);
+    if (idx === -1) return; // 원문에 없는 표현은 조용히 건너뛴다
+    matches.push({ start: idx, end: idx + expr.length });
+    searchFrom = idx + expr.length;
+  });
+  if (!matches.length) return;
 
   const caretOffset = getCaretOffset();
-  const before = text.slice(0, idx);
-  const match = text.slice(idx, idx + data.detectedExpression.length);
-  const after = text.slice(idx + data.detectedExpression.length);
 
   messageInput.innerHTML = "";
-  messageInput.appendChild(document.createTextNode(before));
-  const span = document.createElement("span");
-  span.className = "risky-word";
-  span.textContent = match;
-  messageInput.appendChild(span);
-  messageInput.appendChild(document.createTextNode(after));
+  let cursor = 0;
+  const spans = [];
+  matches.forEach(({ start, end }) => {
+    if (start > cursor) messageInput.appendChild(document.createTextNode(text.slice(cursor, start)));
+    const span = document.createElement("span");
+    span.className = "risky-word";
+    span.textContent = text.slice(start, end);
+    messageInput.appendChild(span);
+    spans.push(span);
+    cursor = end;
+  });
+  if (cursor < text.length) messageInput.appendChild(document.createTextNode(text.slice(cursor)));
 
-  activeRiskySpan = span;
+  activeRiskySpans = spans;
   lastCultureData = data;
   setCaretOffset(caretOffset);
 }
 
 messageInput.addEventListener("input", () => {
   clearTimeout(debounceTimer);
-  clearRiskyWord(); // 텍스트가 바뀌면 이전 분석 결과에 딸린 밑줄은 더 이상 유효하지 않다.
+  clearRiskyWords(); // 텍스트가 바뀌면 이전 분석 결과에 딸린 밑줄은 더 이상 유효하지 않다.
   if (messageInput.textContent.trim() === "") messageInput.innerHTML = "";
 
   const text = getComposerText();
@@ -572,7 +589,7 @@ async function analyzeCultureTranslation(text) {
     if (getComposerText() !== text) return; // 이미 텍스트가 바뀐 경우 무시
 
     if (data.riskDetected) {
-      markRiskyWord(data);
+      markRiskyWords(data);
     }
   } catch (e) {
     if (e.name !== "AbortError") console.error("문화번역기 분석 실패", e);
@@ -611,7 +628,7 @@ function showCulturePopupNear(span, data) {
 
 function hideCulturePopup() {
   culturePopup.classList.add("hidden");
-  if (activeRiskySpan) activeRiskySpan.classList.remove("highlighted");
+  activeRiskySpans.forEach((span) => span.classList.remove("highlighted"));
 }
 
 culturePopupClose.addEventListener("click", hideCulturePopup);
@@ -620,16 +637,23 @@ cultureDismiss.addEventListener("click", hideCulturePopup);
 const ACCEPT_UNDO_MS = 6000; // 수락 후 "실행 취소" 토스트가 떠 있는 시간
 
 cultureAccept.addEventListener("click", () => {
-  if (!lastCultureData || !activeRiskySpan) return;
+  if (!lastCultureData || !activeRiskySpans.length) return;
 
-  const originalText = activeRiskySpan.textContent;
   const suggestedText = lastCultureData.suggestedText;
+
+  // 밑줄 친 표현이 여러 개면(첫 표현 ~ 마지막 표현) 그 사이 구간을 통째로 하나의 제안 문구로 바꾼다.
+  const range = document.createRange();
+  range.setStartBefore(activeRiskySpans[0]);
+  range.setEndAfter(activeRiskySpans[activeRiskySpans.length - 1]);
+  const originalText = range.toString();
+  range.deleteContents();
 
   const flashSpan = document.createElement("span");
   flashSpan.className = "accepted-flash";
   flashSpan.textContent = suggestedText;
-  activeRiskySpan.replaceWith(flashSpan);
-  activeRiskySpan = null;
+  range.insertNode(flashSpan);
+
+  activeRiskySpans = [];
   hideCulturePopup();
 
   // 토스트가 떠 있는 동안은 span을 유지해서 실행 취소 시 정확히 그 자리를 되돌릴 수 있게 한다.
