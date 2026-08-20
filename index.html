@@ -125,13 +125,15 @@
        <div class="composer-column">
         <div class="culture-popup hidden" id="culturePopup">
           <div class="culture-popup-header">
-            <div class="culture-popup-country">
-              <span id="cultureFlag" class="culture-flag-icon"></span>
-              <strong id="cultureCountryLabel">Business Culture</strong>
-            </div>
-            <div class="culture-popup-time">
-              <span>⏰</span>
-              <span id="cultureTimeInfo">-</span>
+            <div class="culture-popup-header-main">
+              <div class="culture-popup-country">
+                <span id="cultureFlag" class="culture-flag-icon"></span>
+                <strong id="cultureCountryLabel">Business Culture</strong>
+              </div>
+              <div class="culture-popup-time">
+                <span>⏰</span>
+                <span id="cultureTimeInfo">-</span>
+              </div>
             </div>
             <button class="culture-popup-close" id="culturePopupClose" aria-label="닫기">×</button>
           </div>
@@ -181,24 +183,33 @@
       <div class="panel-header">
         <div class="panel-header-title">
           <img src="logo-icon.png" class="panel-logo" alt="" />
-          <strong>ONE PACE Meeting Summary</strong>
+          <strong>ONE PACE 요약</strong>
         </div>
-        <button id="closePanel">×</button>
+        <div class="panel-header-actions">
+          <button class="panel-header-icon-btn" id="panelSettingsBtn" aria-label="설정">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82A1.65 1.65 0 0 0 3 13.09H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+          </button>
+          <button id="closePanel">×</button>
+        </div>
       </div>
       <div class="panel-body">
-        <span class="summary-card-badge summary-card-badge-ai">✦ AI</span>
-        <h2>AI 요약</h2>
-        <p class="muted">현재 채널의 대화를 업무 기준으로 정리합니다.</p>
+        <div class="summary-intro" id="summaryIntro">
+          <h2>AI 요약</h2>
+          <p class="muted">현재 채널의 대화를 업무 기준으로 정리합니다.</p>
 
-        <label class="summary-select-label" for="summaryCriteriaSelect">요약 기준</label>
-        <button class="summary-select" id="summaryCriteriaSelect" type="button">
-          <span>목표 / 담당자 / 시작·종료 기간</span>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <polyline points="6 9 12 15 18 9"></polyline>
-          </svg>
-        </button>
+          <label class="summary-select-label" for="summaryCriteriaSelect">요약 기준</label>
+          <button class="summary-select" id="summaryCriteriaSelect" type="button">
+            <span>목표 / 담당자 / 시작·종료 기간</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
 
-        <button class="summary-action-btn" id="summaryBtn">AI 요약 요청</button>
+          <button class="summary-action-btn" id="summaryBtn">AI 요약 요청</button>
+        </div>
 
         <div class="summary-loading hidden" id="summaryLoading">
           <span class="pulse-dot"></span> 분석 중...
@@ -211,33 +222,72 @@
 
         <div class="summary-result hidden" id="summaryResult">
           <div class="summary-banner">
-            <span class="summary-banner-icon">💡</span>
+            <svg class="summary-banner-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M9 18h6"></path>
+              <path d="M10 22h4"></path>
+              <path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.3h6c0-1 .4-1.8 1-2.3A7 7 0 0 0 12 2z"></path>
+            </svg>
             <div class="summary-banner-body">
               <div class="summary-banner-title-row">
                 <strong>AI 요약 생성 완료</strong>
                 <span class="summary-banner-time" id="summaryGeneratedAt"></span>
               </div>
-              <span class="summary-banner-link">🔗 <span id="summarySourceLabel"></span> 대화 기준</span>
+              <span class="summary-banner-link">
+                <svg class="summary-banner-link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M10 13a5 5 0 0 0 7.07 0l1.93-1.93a5 5 0 0 0-7.07-7.07L10.5 5.5"></path>
+                  <path d="M14 11a5 5 0 0 0-7.07 0L5 12.93a5 5 0 0 0 7.07 7.07L13.5 18.5"></path>
+                </svg>
+                <span id="summarySourceLabel"></span> 대화 기준
+              </span>
             </div>
           </div>
 
           <div class="summary-card">
-            <span class="summary-card-badge">🎯 목표</span>
-            <p id="summaryText" class="summary-text"></p>
+            <span class="summary-card-badge">
+              <svg class="badge-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="13" cy="11" r="7"></circle>
+                <circle cx="13" cy="11" r="3"></circle>
+                <path d="M3 21v-5h5"></path>
+                <path d="M3 21l7.5-7.5"></path>
+              </svg>
+              목표
+            </span>
+            <p id="summaryGoal" class="summary-text"></p>
           </div>
 
           <div class="summary-card">
-            <span class="summary-card-badge">📋 결정 사항</span>
-            <ul class="result-list" id="summaryDecisions"></ul>
+            <span class="summary-card-badge">
+              <svg class="badge-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="11" cy="11" r="7"></circle>
+                <line x1="21" y1="21" x2="16.2" y2="16.2"></line>
+              </svg>
+              담당자 &amp; 기한
+            </span>
+            <ul class="result-list">
+              <li>담당자: <span id="summaryAssignee"></span></li>
+              <li>마감기한: <span id="summaryDueDate"></span></li>
+            </ul>
           </div>
 
           <div class="summary-card summary-card-teal">
-            <span class="summary-card-badge summary-card-badge-teal">✅ 미결 업무</span>
-            <ul class="result-list" id="summaryActionItems"></ul>
+            <span class="summary-card-badge summary-card-badge-teal">
+              <svg class="badge-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="9"></circle>
+                <line x1="12" y1="8" x2="12" y2="13"></line>
+                <line x1="12" y1="16.3" x2="12.01" y2="16.3"></line>
+              </svg>
+              긴급도 &amp; 상태
+            </span>
+            <ul class="result-list">
+              <li><span class="urgency-line">긴급도: <span class="urgency-dot" id="summaryUrgencyDot"></span><span id="summaryUrgency"></span></span></li>
+              <li>승인 상태: <span id="summaryApprovalStatus"></span></li>
+              <li>피드백 상태: <span id="summaryFeedbackStatus"></span></li>
+            </ul>
           </div>
 
           <button class="summary-action-btn" id="copySummaryBtn">요약 텍스트 복사</button>
           <button class="summary-action-btn" id="postSummary">슬랙 채널에 공유</button>
+          <button class="summary-regenerate-link" id="summaryRegenerateBtn" type="button">다시 요약하기</button>
         </div>
       </div>
     </aside>

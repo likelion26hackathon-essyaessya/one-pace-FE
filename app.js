@@ -35,15 +35,22 @@ const counterpartBubbleText = document.getElementById("counterpartBubbleText");
 const onepaceTrigger = document.getElementById("onepaceTrigger");
 const rightPanel = document.getElementById("rightPanel");
 const closePanel = document.getElementById("closePanel");
+const summaryIntro = document.getElementById("summaryIntro");
+const panelSettingsBtn = document.getElementById("panelSettingsBtn");
 const summaryCriteriaSelect = document.getElementById("summaryCriteriaSelect");
 const summaryBtn = document.getElementById("summaryBtn");
 const summaryLoading = document.getElementById("summaryLoading");
 const summaryError = document.getElementById("summaryError");
 const summaryRetryBtn = document.getElementById("summaryRetryBtn");
 const summaryResult = document.getElementById("summaryResult");
-const summaryText = document.getElementById("summaryText");
-const summaryDecisions = document.getElementById("summaryDecisions");
-const summaryActionItems = document.getElementById("summaryActionItems");
+const summaryRegenerateBtn = document.getElementById("summaryRegenerateBtn");
+const summaryGoal = document.getElementById("summaryGoal");
+const summaryAssignee = document.getElementById("summaryAssignee");
+const summaryDueDate = document.getElementById("summaryDueDate");
+const summaryUrgency = document.getElementById("summaryUrgency");
+const summaryUrgencyDot = document.getElementById("summaryUrgencyDot");
+const summaryApprovalStatus = document.getElementById("summaryApprovalStatus");
+const summaryFeedbackStatus = document.getElementById("summaryFeedbackStatus");
 const summaryGeneratedAt = document.getElementById("summaryGeneratedAt");
 const summarySourceLabel = document.getElementById("summarySourceLabel");
 const copySummaryBtn = document.getElementById("copySummaryBtn");
@@ -497,7 +504,12 @@ closePanel.addEventListener("click", () => {
   rightPanel.classList.add("hidden");
 });
 
+panelSettingsBtn.addEventListener("click", () => {
+  showToast("데모 버전에서는 지원하지 않는 기능이에요");
+});
+
 function setSummaryView(view) {
+  summaryIntro.classList.toggle("hidden", view !== "idle");
   summaryLoading.classList.toggle("hidden", view !== "loading");
   summaryError.classList.toggle("hidden", view !== "error");
   summaryResult.classList.toggle("hidden", view !== "result");
@@ -525,45 +537,44 @@ async function generateMeetingSummary() {
   }
 }
 
+function getUrgencyDotClass(urgency) {
+  const text = urgency || "";
+  if (/높음|긴급|urgent|high/i.test(text)) return "high";
+  if (/낮음|여유|low/i.test(text)) return "low";
+  return "";
+}
+
 function renderSummaryResult(data) {
-  summaryText.textContent = data.summary || "";
+  const detail = (data.actionItems && data.actionItems[0]) || {};
 
-  summaryDecisions.innerHTML = "";
-  (data.decisions || []).forEach((d) => {
-    const li = document.createElement("li");
-    li.textContent = `${d.decisionText} — ${d.decidedBy}`;
-    summaryDecisions.appendChild(li);
-  });
-
-  summaryActionItems.innerHTML = "";
-  (data.actionItems || []).forEach((a) => {
-    const li = document.createElement("li");
-    li.textContent = `${a.title} (담당: ${a.assignee}, 기한: ${a.dueDate})`;
-    summaryActionItems.appendChild(li);
-  });
+  summaryGoal.textContent = data.goal || "";
+  summaryAssignee.textContent = detail.assignee || "";
+  summaryDueDate.textContent = detail.dueDate || "";
+  summaryUrgency.textContent = detail.urgency || "";
+  summaryUrgencyDot.className = "urgency-dot " + getUrgencyDotClass(detail.urgency);
+  summaryApprovalStatus.textContent = detail.approvalStatus || "";
+  summaryFeedbackStatus.textContent = detail.feedbackStatus || "";
 
   summaryGeneratedAt.textContent = `${formatKoreanTime(new Date())} 기준`;
   summarySourceLabel.textContent = CONVERSATION_META[state.currentConversation].title;
 }
 
 function buildSummaryLines(data) {
-  const lines = [`요약: ${data.summary}`];
+  const detail = (data.actionItems && data.actionItems[0]) || {};
 
-  if ((data.decisions || []).length) {
-    lines.push("결정 사항:");
-    data.decisions.forEach((d) => lines.push(`- ${d.decisionText} (${d.decidedBy})`));
-  }
-
-  if ((data.actionItems || []).length) {
-    lines.push("미결 업무:");
-    data.actionItems.forEach((a) => lines.push(`- ${a.title} (담당: ${a.assignee}, 기한: ${a.dueDate})`));
-  }
-
-  return lines;
+  return [
+    `목표: ${data.goal}`,
+    `담당자: ${detail.assignee}`,
+    `마감기한: ${detail.dueDate}`,
+    `긴급도: ${detail.urgency}`,
+    `승인 상태: ${detail.approvalStatus}`,
+    `피드백 상태: ${detail.feedbackStatus}`,
+  ];
 }
 
 summaryBtn.addEventListener("click", generateMeetingSummary);
 summaryRetryBtn.addEventListener("click", generateMeetingSummary);
+summaryRegenerateBtn.addEventListener("click", generateMeetingSummary);
 
 copySummaryBtn.addEventListener("click", async () => {
   if (!lastSummaryData) return;
