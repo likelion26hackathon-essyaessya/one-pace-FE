@@ -14,6 +14,7 @@ const state = {
 
 const messagesEl = document.getElementById("messages");
 const composerWrap = document.querySelector(".composer-wrap");
+const composerColumn = document.querySelector(".composer-column");
 const messageInput = document.getElementById("messageInput");
 const sendBtn = document.getElementById("sendBtn");
 
@@ -210,8 +211,8 @@ function switchConversation(key, { silent = false } = {}) {
   updateCounterpartStatus();
 
   // 대화방을 옮기면 작성 중이던 메시지와 그에 딸린 분석 상태를 모두 초기화한다.
-  messageInput.value = "";
-  hideCulturePopup();
+  messageInput.innerHTML = "";
+  clearRiskyWord();
   cultureAnalyzing.classList.add("hidden");
   lastAnalyzedText = "";
   if (abortController) abortController.abort();
@@ -289,16 +290,20 @@ function renderMessage(message) {
   scrollMessagesToBottom();
 }
 
+function getComposerText() {
+  return messageInput.innerText;
+}
+
 function sendMessage() {
-  const text = messageInput.value.trim();
+  const text = getComposerText().trim();
   if (!text) return;
 
   const message = { sender: "You", text, timestamp: new Date().toISOString() };
   state.conversations[state.currentConversation].push(message);
   renderMessage(message);
 
-  messageInput.value = "";
-  hideCulturePopup();
+  messageInput.innerHTML = "";
+  clearRiskyWord();
   cultureAnalyzing.classList.add("hidden");
   lastAnalyzedText = "";
   if (abortController) abortController.abort();
@@ -408,14 +413,100 @@ let debounceTimer = null;
 let abortController = null;
 let lastAnalyzedText = "";
 let lastCultureData = null;
+let activeRiskySpan = null; // 밑줄 쳐진 위험 단어 <span>. 클릭해야 팝업이 뜬다.
 
 const CULTURE_DEBOUNCE_MS = 300; // 실시간에 가깝게 느껴지도록 최소한으로만 대기
 
+// contenteditable 안의 caret 위치를 문자 오프셋으로 저장/복원한다.
+// span으로 감싸는 DOM 변경(innerHTML 재작성) 후에도 커서가 튀지 않도록 하기 위함.
+function getCaretOffset() {
+  const selection = window.getSelection();
+  if (!selection || !selection.rangeCount) return 0;
+  const range = selection.getRangeAt(0);
+  const preRange = range.cloneRange();
+  preRange.selectNodeContents(messageInput);
+  preRange.setEnd(range.endContainer, range.endOffset);
+  return preRange.toString().length;
+}
+
+function setCaretOffset(offset) {
+  const range = document.createRange();
+  const selection = window.getSelection();
+  let remaining = offset;
+  let found = false;
+
+  (function walk(node) {
+    if (found) return;
+    if (node.nodeType === Node.TEXT_NODE) {
+      const len = node.textContent.length;
+      if (remaining <= len) {
+        range.setStart(node, remaining);
+        range.collapse(true);
+        found = true;
+      } else {
+        remaining -= len;
+      }
+    } else {
+      for (const child of node.childNodes) {
+        walk(child);
+        if (found) return;
+      }
+    }
+  })(messageInput);
+
+  if (!found) {
+    range.selectNodeContents(messageInput);
+    range.collapse(false);
+  }
+  selection.removeAllRanges();
+  selection.addRange(range);
+}
+
+// 위험 단어 밑줄을 벗겨내고 원래 순수 텍스트로 되돌린다 (새 분석 전, 전송 전, 대화방 전환 시 호출).
+function clearRiskyWord() {
+  hideCulturePopup();
+  if (activeRiskySpan && activeRiskySpan.isConnected) {
+    const caretOffset = getCaretOffset();
+    activeRiskySpan.replaceWith(document.createTextNode(activeRiskySpan.textContent));
+    messageInput.normalize();
+    setCaretOffset(caretOffset);
+  }
+  activeRiskySpan = null;
+}
+
+// 분석 결과로 감지된 표현을 입력창 안에서 찾아 밑줄 <span>으로 감싼다. 이 시점엔 팝업을 띄우지 않는다.
+function markRiskyWord(data) {
+  clearRiskyWord();
+
+  const text = messageInput.textContent;
+  const idx = text.indexOf(data.detectedExpression);
+  if (idx === -1) return;
+
+  const caretOffset = getCaretOffset();
+  const before = text.slice(0, idx);
+  const match = text.slice(idx, idx + data.detectedExpression.length);
+  const after = text.slice(idx + data.detectedExpression.length);
+
+  messageInput.innerHTML = "";
+  messageInput.appendChild(document.createTextNode(before));
+  const span = document.createElement("span");
+  span.className = "risky-word";
+  span.textContent = match;
+  messageInput.appendChild(span);
+  messageInput.appendChild(document.createTextNode(after));
+
+  activeRiskySpan = span;
+  lastCultureData = data;
+  setCaretOffset(caretOffset);
+}
+
 messageInput.addEventListener("input", () => {
   clearTimeout(debounceTimer);
-  const text = messageInput.value;
+  clearRiskyWord(); // 텍스트가 바뀌면 이전 분석 결과에 딸린 밑줄은 더 이상 유효하지 않다.
+  if (messageInput.textContent.trim() === "") messageInput.innerHTML = "";
+
+  const text = getComposerText();
   if (text.length < 5) {
-    hideCulturePopup();
     cultureAnalyzing.classList.add("hidden");
     return;
   }
@@ -430,6 +521,14 @@ messageInput.addEventListener("input", () => {
     lastAnalyzedText = text;
     analyzeCultureTranslation(text);
   }, CULTURE_DEBOUNCE_MS);
+});
+
+// 밑줄 쳐진 단어를 클릭하면 그 위에 말풍선처럼 팝업을 띄운다.
+messageInput.addEventListener("click", (e) => {
+  const span = e.target.closest(".risky-word");
+  if (!span || !lastCultureData) return;
+  span.classList.add("highlighted"); // 회색 형광펜 박스
+  showCulturePopupNear(span, lastCultureData);
 });
 
 async function analyzeCultureTranslation(text) {
@@ -448,12 +547,10 @@ async function analyzeCultureTranslation(text) {
     if (!res.ok) throw new Error("문화번역기 요청 실패");
 
     const data = await res.json();
-    if (messageInput.value !== text) return; // 이미 텍스트가 바뀐 경우 무시
+    if (getComposerText() !== text) return; // 이미 텍스트가 바뀐 경우 무시
 
     if (data.riskDetected) {
-      showCulturePopup(data);
-    } else {
-      hideCulturePopup();
+      markRiskyWord(data);
     }
   } catch (e) {
     if (e.name !== "AbortError") console.error("문화번역기 분석 실패", e);
@@ -462,8 +559,7 @@ async function analyzeCultureTranslation(text) {
   }
 }
 
-function showCulturePopup(data) {
-  lastCultureData = data;
+function showCulturePopupNear(span, data) {
   const country = getCurrentCounterpartCountry();
   const timeInfo = getCounterpartTimeInfo(country);
 
@@ -475,18 +571,35 @@ function showCulturePopup(data) {
   cultureSuggested.textContent = data.suggestedText;
 
   culturePopup.classList.remove("hidden");
+
+  // 클릭한 단어 바로 위에 말풍선처럼 붙도록 팝업 위치를 매번 재계산한다.
+  const spanRect = span.getBoundingClientRect();
+  const colRect = composerColumn.getBoundingClientRect();
+
+  culturePopup.style.bottom = `${colRect.bottom - spanRect.top + 8}px`;
+
+  const popupWidth = culturePopup.offsetWidth;
+  let left = spanRect.left - colRect.left - 20;
+  left = Math.max(0, Math.min(left, colRect.width - popupWidth));
+  culturePopup.style.left = `${left}px`;
+
+  const tailLeft = spanRect.left + spanRect.width / 2 - colRect.left - left;
+  culturePopup.style.setProperty("--tail-left", `${Math.max(16, Math.min(tailLeft, popupWidth - 16))}px`);
 }
 
 function hideCulturePopup() {
   culturePopup.classList.add("hidden");
+  if (activeRiskySpan) activeRiskySpan.classList.remove("highlighted");
 }
 
 culturePopupClose.addEventListener("click", hideCulturePopup);
 cultureDismiss.addEventListener("click", hideCulturePopup);
 
 cultureAccept.addEventListener("click", () => {
-  if (!lastCultureData) return;
-  messageInput.value = lastCultureData.suggestedText;
+  if (!lastCultureData || !activeRiskySpan) return;
+  activeRiskySpan.replaceWith(document.createTextNode(lastCultureData.suggestedText));
+  messageInput.normalize();
+  activeRiskySpan = null;
   hideCulturePopup();
 });
 

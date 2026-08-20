@@ -543,15 +543,31 @@ button {
   padding: 12px;
   border: 0;
   outline: 0;
-  resize: none;
   color: var(--text);
   background: #fff;
   font-size: 14px;
   line-height: 20px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 
-#messageInput::placeholder {
+#messageInput:empty::before {
+  content: attr(data-placeholder);
   color: #888;
+  pointer-events: none;
+}
+
+.risky-word {
+  text-decoration: underline;
+  text-decoration-color: var(--risk-badge-text);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 2px;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.risky-word.highlighted {
+  background: #e2e2e2;
 }
 
 .composer-bottom {
@@ -856,6 +872,7 @@ button {
 ========================= */
 
 .culture-popup {
+  --tail-left: 24px;
   position: absolute;
   left: 0;
   bottom: 100%;
@@ -865,8 +882,21 @@ button {
   background: var(--popup-bg);
   border-radius: 12px;
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.16);
-  overflow: hidden;
   z-index: 20;
+}
+
+.culture-popup::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: var(--tail-left);
+  width: 14px;
+  height: 14px;
+  background: var(--popup-bg);
+  box-shadow: 3px 3px 4px -2px rgba(0, 0, 0, 0.12);
+  transform: translate(-50%, -50%) rotate(45deg);
+  clip-path: polygon(100% 0, 0 100%, 100% 100%);
+  border-radius: 0 0 3px 0;
 }
 
 .culture-popup.hidden {
@@ -938,7 +968,6 @@ button {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  margin-left: -6px;
   padding: 4px 8px;
   border-radius: 999px;
   font-size: 13px;
@@ -948,17 +977,17 @@ button {
 .risk-badge {
   background: var(--risk-badge-bg);
   color: var(--risk-badge-text);
-  margin-bottom: 6px;
+  margin: 0 0 6px 12px;
 }
 
 .nuance-badge {
   background: var(--nuance-badge-bg);
   color: var(--text);
-  margin: 8px 0 6px -6px;
+  margin: 8px 0 6px 12px;
 }
 
 .culture-popup-body > p {
-  margin: 0 0 4px;
+  margin: 0 0 4px 12px;
   color: var(--text);
   font-size: 14px;
   line-height: 1.4;
