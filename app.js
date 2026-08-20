@@ -618,7 +618,8 @@ function showCulturePopupNear(span, data) {
   cultureFlag.innerHTML = COUNTRY_FLAG_SVG[country] || "";
   cultureCountryLabel.textContent = timeInfo.label;
   cultureTimeInfo.textContent = `${COUNTRY_CITY[country] || ""} ${timeInfo.timeStr}(${timeInfo.statusText})`;
-  cultureDetected.textContent = data.detectedExpression;
+  // detectedExpression이 비어있는 응답도 있어서, 그 경우 realtimeDetection 배열로 대체 표시한다.
+  cultureDetected.textContent = data.detectedExpression || (data.realtimeDetection || []).join(", ");
   cultureNuance.textContent = data.nuanceExplanation;
   cultureSuggested.textContent = data.suggestedText;
 
