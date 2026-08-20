@@ -71,15 +71,37 @@ const introTitle = document.getElementById("introTitle");
 const introDescription = document.getElementById("introDescription");
 
 const toast = document.getElementById("toast");
+const toastMessage = document.getElementById("toastMessage");
+const toastAction = document.getElementById("toastAction");
 
 // ============================================================
 // 토스트 (9절 정책)
 // ============================================================
 
-function showToast(message) {
-  toast.textContent = message;
+let toastHideTimer = null;
+
+function showToast(message, duration = 2000) {
+  clearTimeout(toastHideTimer);
+  toastMessage.textContent = message;
+  toastAction.classList.add("hidden");
+  toastAction.onclick = null;
   toast.classList.remove("hidden");
-  setTimeout(() => toast.classList.add("hidden"), 2000);
+  toastHideTimer = setTimeout(() => toast.classList.add("hidden"), duration);
+}
+
+// 실행취소 액션이 달린 토스트. actionLabel 클릭 시 onAction 실행 후 즉시 닫힌다.
+function showUndoToast(message, actionLabel, onAction, duration = 6000) {
+  clearTimeout(toastHideTimer);
+  toastMessage.textContent = message;
+  toastAction.textContent = actionLabel;
+  toastAction.classList.remove("hidden");
+  toastAction.onclick = () => {
+    onAction();
+    toast.classList.add("hidden");
+    clearTimeout(toastHideTimer);
+  };
+  toast.classList.remove("hidden");
+  toastHideTimer = setTimeout(() => toast.classList.add("hidden"), duration);
 }
 
 workspaceMenuBtn.addEventListener("click", () => {
@@ -595,24 +617,36 @@ function hideCulturePopup() {
 culturePopupClose.addEventListener("click", hideCulturePopup);
 cultureDismiss.addEventListener("click", hideCulturePopup);
 
-const ACCEPT_FLASH_MS = 1600; // 수락한 문장에 민트색 형광펜이 잠깐 칠해졌다 사라지는 시간
+const ACCEPT_UNDO_MS = 6000; // 수락 후 "실행 취소" 토스트가 떠 있는 시간
 
 cultureAccept.addEventListener("click", () => {
   if (!lastCultureData || !activeRiskySpan) return;
 
+  const originalText = activeRiskySpan.textContent;
+  const suggestedText = lastCultureData.suggestedText;
+
   const flashSpan = document.createElement("span");
   flashSpan.className = "accepted-flash";
-  flashSpan.textContent = lastCultureData.suggestedText;
+  flashSpan.textContent = suggestedText;
   activeRiskySpan.replaceWith(flashSpan);
   activeRiskySpan = null;
   hideCulturePopup();
 
-  setTimeout(() => {
+  // 토스트가 떠 있는 동안은 span을 유지해서 실행 취소 시 정확히 그 자리를 되돌릴 수 있게 한다.
+  const finalize = () => {
     if (flashSpan.isConnected) {
       flashSpan.replaceWith(document.createTextNode(flashSpan.textContent));
       messageInput.normalize();
     }
-  }, ACCEPT_FLASH_MS);
+  };
+
+  showUndoToast(`"${suggestedText}"(으)로 수정했어요`, "실행 취소", () => {
+    if (!flashSpan.isConnected) return;
+    flashSpan.replaceWith(document.createTextNode(originalText));
+    messageInput.normalize();
+  }, ACCEPT_UNDO_MS);
+
+  setTimeout(finalize, ACCEPT_UNDO_MS);
 });
 
 // ============================================================
