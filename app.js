@@ -637,26 +637,23 @@ cultureDismiss.addEventListener("click", hideCulturePopup);
 const ACCEPT_UNDO_MS = 6000; // 수락 후 "실행 취소" 토스트가 떠 있는 시간
 
 cultureAccept.addEventListener("click", () => {
-  if (!lastCultureData || !activeRiskySpans.length) return;
+  if (!lastCultureData) return;
 
+  // suggestedText는 밑줄 친 부분만의 대체 문구가 아니라 메시지 전체를 다시 쓴 문장이므로,
+  // 밑줄 범위만 끼워넣지 않고 입력창 전체를 통째로 교체한다.
   const suggestedText = lastCultureData.suggestedText;
-
-  // 밑줄 친 표현이 여러 개면(첫 표현 ~ 마지막 표현) 그 사이 구간을 통째로 하나의 제안 문구로 바꾼다.
-  const range = document.createRange();
-  range.setStartBefore(activeRiskySpans[0]);
-  range.setEndAfter(activeRiskySpans[activeRiskySpans.length - 1]);
-  const originalText = range.toString();
-  range.deleteContents();
-
-  const flashSpan = document.createElement("span");
-  flashSpan.className = "accepted-flash";
-  flashSpan.textContent = suggestedText;
-  range.insertNode(flashSpan);
+  const originalText = getComposerText();
 
   activeRiskySpans = [];
   hideCulturePopup();
 
-  // 토스트가 떠 있는 동안은 span을 유지해서 실행 취소 시 정확히 그 자리를 되돌릴 수 있게 한다.
+  const flashSpan = document.createElement("span");
+  flashSpan.className = "accepted-flash";
+  flashSpan.textContent = suggestedText;
+  messageInput.innerHTML = "";
+  messageInput.appendChild(flashSpan);
+
+  // 토스트가 떠 있는 동안은 span을 유지해서 실행 취소 시 되돌릴 수 있게 한다.
   const finalize = () => {
     if (flashSpan.isConnected) {
       flashSpan.replaceWith(document.createTextNode(flashSpan.textContent));
@@ -665,9 +662,8 @@ cultureAccept.addEventListener("click", () => {
   };
 
   showUndoToast(`"${suggestedText}"(으)로 수정했어요`, "실행 취소", () => {
-    if (!flashSpan.isConnected) return;
-    flashSpan.replaceWith(document.createTextNode(originalText));
-    messageInput.normalize();
+    messageInput.innerHTML = "";
+    messageInput.appendChild(document.createTextNode(originalText));
   }, ACCEPT_UNDO_MS);
 
   setTimeout(finalize, ACCEPT_UNDO_MS);
