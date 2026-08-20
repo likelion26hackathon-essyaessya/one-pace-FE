@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ONEPACE — Slack Demo</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="workspace">
+        <div class="workspace-avatar">O</div>
+        <div class="workspace-info">
+          <strong>ONEPACE</strong>
+          <span>Global Team</span>
+        </div>
+        <button class="icon-btn" id="workspaceMenuBtn" aria-label="워크스페이스 메뉴">⌄</button>
+      </div>
+
+      <div class="sidebar-section quick">
+        <button class="inert">🏠 <span>홈</span></button>
+        <button class="inert">💬 <span>DM</span></button>
+        <button class="inert">🔔 <span>활동</span></button>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="section-title">
+          <span>채널</span>
+          <button class="plus-btn inert">＋</button>
+        </div>
+        <button class="channel active" data-channel="general"># general</button>
+        <button class="channel inert" data-channel="design"># design</button>
+        <button class="channel inert" data-channel="development"># development</button>
+        <button class="channel inert" data-channel="marketing"># marketing</button>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="section-title">
+          <span>DM</span>
+          <button class="plus-btn inert">＋</button>
+        </div>
+        <button class="person inert"><i class="status online"></i> Emma</button>
+        <button class="person inert"><i class="status online"></i> James</button>
+        <button class="person inert"><i class="status away"></i> Sarah</button>
+      </div>
+
+      <div class="profile" id="profileTrigger">
+        <div class="avatar me">Y</div>
+        <div>
+          <strong>You</strong>
+          <span>온라인</span>
+        </div>
+        <i class="status online"></i>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div class="channel-title">
+          <span class="hash">#</span>
+          <div>
+            <h1 id="channelName">general</h1>
+            <span id="channelDescription">팀 전체 공지와 일상적인 대화를 위한 채널</span>
+          </div>
+        </div>
+        <div class="top-actions">
+          <button class="top-btn onepace-trigger" id="onepaceTrigger" aria-label="ONE PACE AI 요약">✦</button>
+          <button class="top-btn inert">🔍</button>
+          <button class="top-btn inert">👥</button>
+          <button class="top-btn inert">⚙</button>
+        </div>
+      </header>
+
+      <section class="messages" id="messages">
+        <div class="channel-intro">
+          <div class="large-hash">#</div>
+          <h2 id="introTitle">general에 오신 것을 환영합니다!</h2>
+          <p>이곳은 ONEPACE 글로벌 팀의 기본 채널입니다.</p>
+        </div>
+
+        <article class="message">
+          <div class="avatar emma">E</div>
+          <div class="message-content">
+            <div class="message-meta"><strong>Emma</strong><span>오전 10:24</span></div>
+            <p>Hi everyone! We need to finalize the landing page this week.</p>
+          </div>
+        </article>
+
+        <article class="message">
+          <div class="avatar james">J</div>
+          <div class="message-content">
+            <div class="message-meta"><strong>James</strong><span>오전 10:27</span></div>
+            <p>Could we finish the design today? We need to move on to development.</p>
+          </div>
+        </article>
+
+        <article class="message">
+          <div class="avatar sarah">S</div>
+          <div class="message-content">
+            <div class="message-meta"><strong>Sarah</strong><span>오전 10:31</span></div>
+            <p>I think that should be possible. I'll check with the design team.</p>
+          </div>
+        </article>
+      </section>
+
+      <div class="composer-wrap">
+        <div class="culture-popup hidden" id="culturePopup">
+          <div class="culture-popup-header">
+            <div class="culture-popup-country">
+              <span id="cultureFlag">🏳️</span>
+              <strong id="cultureCountryLabel">Business Culture</strong>
+            </div>
+            <div class="culture-popup-time">
+              <span>⏰</span>
+              <span id="cultureTimeInfo">-</span>
+            </div>
+            <button class="culture-popup-close" id="culturePopupClose" aria-label="닫기">×</button>
+          </div>
+          <div class="culture-popup-body">
+            <span class="risk-badge">실시간 탐지</span>
+            <p id="cultureDetected"></p>
+            <span class="nuance-badge">예상 뉘앙스</span>
+            <p id="cultureNuance"></p>
+            <div class="suggestion-box">
+              <span class="suggestion-pill">💡 수정 제안</span>
+              <p id="cultureSuggested"></p>
+            </div>
+          </div>
+          <div class="culture-popup-actions">
+            <button class="culture-accept" id="cultureAccept">Accept(수락)</button>
+            <button class="culture-dismiss" id="cultureDismiss">Dismiss(무시)</button>
+          </div>
+        </div>
+        <div class="composer">
+          <div class="composer-tools">
+            <button class="inert">＋</button>
+            <button class="inert">B</button>
+            <button class="inert"><i>I</i></button>
+            <button class="inert">🔗</button>
+            <button class="inert">😊</button>
+          </div>
+          <textarea id="messageInput" rows="2" placeholder="메시지를 입력하세요"></textarea>
+          <div class="composer-bottom">
+            <div class="composer-hint">Enter로 메시지 보내기</div>
+            <button class="send-btn" id="sendBtn">➤</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <aside class="right-panel hidden" id="rightPanel">
+      <div class="panel-header">
+        <strong>ONEPACE</strong>
+        <button id="closePanel">×</button>
+      </div>
+      <div class="panel-body">
+        <div class="ai-badge">✦ AI</div>
+        <h2>AI 요약</h2>
+        <p class="muted">현재 채널의 대화를 업무 기준으로 정리합니다.</p>
+
+        <label>요약 기준</label>
+        <div class="select">목표 / 담당자 / 시작·종료 기간 <span>⌄</span></div>
+
+        <button class="primary" id="summaryBtn">AI 요약 요청</button>
+
+        <div class="summary-loading hidden" id="summaryLoading">
+          <span class="pulse-dot"></span> 분석 중...
+        </div>
+
+        <div class="summary-error hidden" id="summaryError">
+          <p>요약을 불러오지 못했습니다, 다시 시도해주세요</p>
+          <button class="secondary" id="summaryRetryBtn">다시 시도</button>
+        </div>
+
+        <div class="summary-result hidden" id="summaryResult">
+          <div class="result-title">요약</div>
+          <p id="summaryText" class="summary-text"></p>
+
+          <div class="result-title">결정 사항</div>
+          <ul class="result-list" id="summaryDecisions"></ul>
+
+          <div class="result-title">미결 업무</div>
+          <ul class="result-list" id="summaryActionItems"></ul>
+
+          <button class="secondary" id="postSummary">확인 및 채널 전송</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="toast hidden" id="toast"></div>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
