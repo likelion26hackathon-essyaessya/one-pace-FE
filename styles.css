@@ -510,6 +510,16 @@ button {
   font-size: 11px;
 }
 
+.culture-analyzing {
+  margin-left: 6px;
+  color: var(--risk-badge-text);
+  font-weight: 700;
+}
+
+.culture-analyzing.hidden {
+  display: none;
+}
+
 .send-btn {
   width: 30px;
   height: 30px;

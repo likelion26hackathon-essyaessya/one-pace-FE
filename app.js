@@ -26,6 +26,7 @@ const cultureNuance = document.getElementById("cultureNuance");
 const cultureSuggested = document.getElementById("cultureSuggested");
 const cultureAccept = document.getElementById("cultureAccept");
 const cultureDismiss = document.getElementById("cultureDismiss");
+const cultureAnalyzing = document.getElementById("cultureAnalyzing");
 
 const onepaceTrigger = document.getElementById("onepaceTrigger");
 const rightPanel = document.getElementById("rightPanel");
@@ -150,6 +151,7 @@ function sendMessage() {
 
   messageInput.value = "";
   hideCulturePopup();
+  cultureAnalyzing.classList.add("hidden");
   lastAnalyzedText = "";
   if (abortController) abortController.abort();
   clearTimeout(debounceTimer);
@@ -191,31 +193,40 @@ let abortController = null;
 let lastAnalyzedText = "";
 let lastCultureData = null;
 
+const CULTURE_DEBOUNCE_MS = 300; // 실시간에 가깝게 느껴지도록 최소한으로만 대기
+
 messageInput.addEventListener("input", () => {
   clearTimeout(debounceTimer);
   const text = messageInput.value;
   if (text.length < 5) {
     hideCulturePopup();
+    cultureAnalyzing.classList.add("hidden");
     return;
   }
 
+  cultureAnalyzing.classList.remove("hidden"); // 대기 중임을 즉시 보여줘 반응성 체감 향상
+
   debounceTimer = setTimeout(() => {
-    if (text === lastAnalyzedText) return;
+    if (text === lastAnalyzedText) {
+      cultureAnalyzing.classList.add("hidden");
+      return;
+    }
     lastAnalyzedText = text;
     analyzeCultureTranslation(text);
-  }, 800);
+  }, CULTURE_DEBOUNCE_MS);
 });
 
 async function analyzeCultureTranslation(text) {
   if (abortController) abortController.abort();
-  abortController = new AbortController();
+  const myController = new AbortController();
+  abortController = myController;
 
   try {
     const res = await fetch(`${API_BASE_URL}/api/culture-translation/analyze`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text, counterpartCountry: getCurrentCounterpartCountry() }),
-      signal: abortController.signal,
+      signal: myController.signal,
     });
 
     if (!res.ok) throw new Error("문화번역기 요청 실패");
@@ -230,6 +241,8 @@ async function analyzeCultureTranslation(text) {
     }
   } catch (e) {
     if (e.name !== "AbortError") console.error("문화번역기 분석 실패", e);
+  } finally {
+    if (abortController === myController) cultureAnalyzing.classList.add("hidden");
   }
 }
 
