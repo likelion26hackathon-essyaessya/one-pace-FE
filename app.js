@@ -416,6 +416,65 @@ function getCounterpartTimeInfo(countryCode) {
   return { label: COUNTRY_LABEL[countryCode], timeStr, statusText: isAfterWork ? "퇴근 후" : "업무 시간" };
 }
 
+// 마감기한 시차 변환 (6.5 AI 요약 - 담당자 & 기한)
+const KST_TIMEZONE = "Asia/Seoul";
+
+function getUtcOffsetMinutes(date, timeZone) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    hour12: false,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  })
+    .formatToParts(date)
+    .reduce((acc, p) => {
+      acc[p.type] = p.value;
+      return acc;
+    }, {});
+  const asUTC = Date.UTC(parts.year, parts.month - 1, parts.day, Number(parts.hour) % 24, parts.minute, parts.second);
+  return (asUTC - date.getTime()) / 60000;
+}
+
+// dueDate에 구체적인 시각이 없으면(날짜만 오면) 시차 계산을 할 수 없으므로 원문 그대로 보여준다.
+function formatDueDateForDisplay(dueDateStr, countryCode) {
+  if (!dueDateStr) return "";
+
+  const hasTime = /\d{1,2}:\d{2}/.test(dueDateStr) || /T\d{2}/.test(dueDateStr);
+  const localTz = TIMEZONE_MAP[countryCode];
+  const date = new Date(dueDateStr);
+  if (!hasTime || !localTz || Number.isNaN(date.getTime())) return dueDateStr;
+
+  const kstText = new Intl.DateTimeFormat("ko-KR", {
+    timeZone: KST_TIMEZONE,
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(date);
+
+  const localTime = new Intl.DateTimeFormat("en-GB", {
+    timeZone: localTz,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(date);
+
+  const localTzAbbr =
+    new Intl.DateTimeFormat("en-US", { timeZone: localTz, timeZoneName: "short" })
+      .formatToParts(date)
+      .find((p) => p.type === "timeZoneName")?.value || "";
+
+  const offsetHours = Math.round((getUtcOffsetMinutes(date, localTz) - getUtcOffsetMinutes(date, KST_TIMEZONE)) / 60);
+  const offsetLabel = offsetHours > 0 ? `+${offsetHours}h` : `${offsetHours}h`;
+
+  return `${kstText} KST (${localTime} ${localTzAbbr} / 시차 ${offsetLabel})`;
+}
+
 function getCurrentCounterpartCountry() {
   return state.currentCounterpartCountry;
 }
@@ -800,7 +859,7 @@ function renderSummaryResult(data) {
 
   summaryGoal.textContent = data.goal || "";
   summaryAssignee.textContent = detail.assignee || "";
-  summaryDueDate.textContent = detail.dueDate || "";
+  summaryDueDate.textContent = formatDueDateForDisplay(detail.dueDate, getCurrentCounterpartCountry());
   summaryUrgency.textContent = detail.urgency || "";
   summaryUrgencyDot.className = "urgency-dot " + getUrgencyDotClass(detail.urgency);
   summaryApprovalStatus.textContent = detail.approvalStatus || "";
@@ -816,7 +875,7 @@ function buildSummaryLines(data) {
   return [
     `목표: ${data.goal}`,
     `담당자: ${detail.assignee}`,
-    `마감기한: ${detail.dueDate}`,
+    `마감기한: ${formatDueDateForDisplay(detail.dueDate, getCurrentCounterpartCountry())}`,
     `긴급도: ${detail.urgency}`,
     `승인 상태: ${detail.approvalStatus}`,
     `피드백 상태: ${detail.feedbackStatus}`,
